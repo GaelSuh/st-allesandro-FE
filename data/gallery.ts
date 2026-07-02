@@ -27,7 +27,7 @@ export interface CampusPhoto {
 }
 
 /** Official SAU crest — "Innovative education for a healthier future". */
-export const CREST_SRC = "/img/10.jpg";
+export const CREST_SRC = "/logo/crest-512.png";
 
 export const campusPhotos: CampusPhoto[] = [
   { n: 3, src: "/img/3.jpg", category: "Partnership", feature: true,

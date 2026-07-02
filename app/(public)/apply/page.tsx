@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BadgeCheck, Check, FileUp, GraduationCap, IdCard, Loader2, Sparkles, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, GraduationCap, Sparkles, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -13,14 +13,13 @@ import { Input, Textarea } from "@/components/ui/Input";
 import { Label, FieldError, FieldHint } from "@/components/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { programs } from "@/data/programs";
+import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 const steps = [
   { id: 0, label: "Personal", Icon: User },
-  { id: 1, label: "Academics", Icon: GraduationCap },
-  { id: 2, label: "Program", Icon: IdCard },
-  { id: 3, label: "Documents", Icon: FileUp },
-  { id: 4, label: "Review", Icon: BadgeCheck },
+  { id: 1, label: "Background & program", Icon: GraduationCap },
+  { id: 2, label: "Review", Icon: BadgeCheck },
 ];
 
 const personalSchema = z.object({
@@ -29,21 +28,15 @@ const personalSchema = z.object({
   email: z.string().email("That doesn't look like a valid email."),
   phone: z.string().min(8, "Please include country code, e.g. +237…"),
   gender: z.enum(["female", "male", "other"], { error: "Select your gender." }),
-  dob: z.string().min(8, "Date of birth is required."),
   nationality: z.string().min(2, "Required."),
 });
 
-const academicSchema = z.object({
+const backgroundSchema = z.object({
   lastSchool: z.string().min(2, "Please enter your most recent school."),
   qualification: z.string().min(2, "Required."),
   yearCompleted: z.string().regex(/^\d{4}$/, "Enter a 4-digit year."),
-  grades: z.string().min(2, "Brief summary required."),
-});
-
-const programSchema = z.object({
   programId: z.string().min(1, "Please pick a program."),
   intake: z.enum(["sept_2026", "jan_2027"], { error: "Select intake." }),
-  motivation: z.string().min(40, "Tell us in at least 40 characters why you want to join us."),
 });
 
 export default function ApplyPage() {
@@ -53,17 +46,12 @@ export default function ApplyPage() {
 
   const [personal, setPersonal] = useState({
     firstName: "", lastName: "", email: "", phone: "", gender: "" as "female" | "male" | "other" | "",
-    dob: "", nationality: "Cameroonian",
+    nationality: "Cameroonian",
   });
-  const [academic, setAcademic] = useState({ lastSchool: "", qualification: "", yearCompleted: "", grades: "" });
-  const [programPick, setProgramPick] = useState({ programId: "", intake: "" as "sept_2026" | "jan_2027" | "", motivation: "" });
-  const [docs, setDocs] = useState([
-    { name: "GCE A-Level results / equivalent", uploaded: false, required: true },
-    { name: "Birth certificate", uploaded: false, required: true },
-    { name: "National ID or passport", uploaded: false, required: true },
-    { name: "Medical fitness report", uploaded: false, required: false },
-    { name: "Recommendation letter (optional)", uploaded: false, required: false },
-  ]);
+  const [background, setBackground] = useState({
+    lastSchool: "", qualification: "", yearCompleted: "",
+    programId: "", intake: "" as "sept_2026" | "jan_2027" | "", motivation: "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateCurrent = () => {
@@ -72,16 +60,8 @@ export default function ApplyPage() {
       const r = personalSchema.safeParse(personal);
       if (!r.success) r.error.issues.forEach((e) => (next[e.path.join(".")] = e.message));
     } else if (step === 1) {
-      const r = academicSchema.safeParse(academic);
+      const r = backgroundSchema.safeParse(background);
       if (!r.success) r.error.issues.forEach((e) => (next[e.path.join(".")] = e.message));
-    } else if (step === 2) {
-      const r = programSchema.safeParse(programPick);
-      if (!r.success) r.error.issues.forEach((e) => (next[e.path.join(".")] = e.message));
-    } else if (step === 3) {
-      const missing = docs.filter((d) => d.required && !d.uploaded);
-      if (missing.length > 0) {
-        next["docs"] = `Please upload required documents: ${missing.map((d) => d.name).join(", ")}.`;
-      }
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -99,11 +79,35 @@ export default function ApplyPage() {
   const submit = async () => {
     if (!validateCurrent()) return;
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1600));
-    setSubmitting(false);
     const number = "SAUI-APP-26-" + Math.floor(9000 + Math.random() * 999);
+    const program = programs.find((p) => p.id === background.programId);
+    const intakeLabel =
+      background.intake === "sept_2026" ? "September 2026" :
+      background.intake === "jan_2027" ? "January 2027" : "—";
+    const subject = `[Admission] ${program ? program.name : "Application"} — ${personal.firstName} ${personal.lastName}`;
+    const body = [
+      `Tracking number: ${number}`,
+      "",
+      "— Personal —",
+      `Name: ${personal.firstName} ${personal.lastName}`,
+      `Email: ${personal.email}`,
+      `Phone: ${personal.phone}`,
+      `Gender: ${personal.gender}`,
+      `Nationality: ${personal.nationality}`,
+      "",
+      "— Background & program —",
+      `Last school: ${background.lastSchool}`,
+      `Qualification: ${background.qualification} (${background.yearCompleted})`,
+      `Program: ${program ? `${program.code} · ${program.name}` : "—"}`,
+      `Intake: ${intakeLabel}`,
+      `Motivation: ${background.motivation || "—"}`,
+    ].join("\n");
+    window.location.href = `mailto:${BRAND.contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setSubmitting(false);
     setSubmitted({ number });
-    toast.success("Application submitted successfully!", { description: `Your tracking number is ${number}` });
+    toast.success("Application ready to send", {
+      description: `We've opened your email app to send your details to ${BRAND.contact.email} (ref ${number}).`,
+    });
   };
 
   if (submitted) {
@@ -118,22 +122,30 @@ export default function ApplyPage() {
             <Check className="h-8 w-8" strokeWidth={3} />
           </div>
           <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight text-fg-primary">
-            Application received
+            Almost done — send your email
           </h1>
           <p className="mt-3 text-base text-fg-secondary text-pretty">
-            Thank you{personal.firstName ? `, ${personal.firstName}` : ""} — your application has been received.
-            Track its status anytime with your reference number below.
+            Thank you{personal.firstName ? `, ${personal.firstName}` : ""}. We&rsquo;ve opened your email app with
+            your application addressed to <span className="font-semibold text-fg-primary">{BRAND.contact.email}</span> —
+            just press send. Keep your reference number below.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-default bg-surface-sunken px-4 py-2.5 font-mono text-sm font-semibold text-fg-primary">
             <Sparkles className="h-4 w-4 text-[var(--color-gold-600)]" />
             {submitted.number}
           </div>
+          <p className="mx-auto mt-5 max-w-md text-sm text-fg-tertiary">
+            If your email app didn&rsquo;t open, email us directly at{" "}
+            <a href={`mailto:${BRAND.contact.email}`} className="font-semibold text-[var(--color-brand-700)]">
+              {BRAND.contact.email}
+            </a>{" "}
+            or call {BRAND.contact.phone}.
+          </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" variant="primary">
-              <Link href="/login">Open the applicant portal</Link>
+              <Link href="/">Back to homepage</Link>
             </Button>
             <Button asChild size="lg" variant="secondary">
-              <Link href="/">Back to homepage</Link>
+              <Link href="/contact">Contact admissions</Link>
             </Button>
           </div>
         </motion.div>
@@ -152,7 +164,10 @@ export default function ApplyPage() {
         <h1 className="mt-12 font-display text-3xl font-semibold tracking-tight text-fg-primary sm:text-4xl">
           Begin your application
         </h1>
-        <p className="mt-2 text-base text-fg-secondary">It takes ~15 minutes. Your progress is auto-saved.</p>
+        <p className="mt-2 text-base text-fg-secondary">
+          Three short steps — most applicants finish in under five minutes. No documents needed to apply;
+          our team confirms those with you directly.
+        </p>
 
         <Stepper currentStep={step} />
 
@@ -165,21 +180,9 @@ export default function ApplyPage() {
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.25 }}
             >
-              {step === 0 && (
-                <PersonalStep value={personal} onChange={setPersonal} errors={errors} />
-              )}
-              {step === 1 && (
-                <AcademicStep value={academic} onChange={setAcademic} errors={errors} />
-              )}
-              {step === 2 && (
-                <ProgramStep value={programPick} onChange={setProgramPick} errors={errors} />
-              )}
-              {step === 3 && (
-                <DocumentsStep docs={docs} onToggle={(i) => setDocs((d) => d.map((x, j) => (j === i ? { ...x, uploaded: !x.uploaded } : x)))} error={errors.docs} />
-              )}
-              {step === 4 && (
-                <ReviewStep personal={personal} academic={academic} programPick={programPick} docs={docs} />
-              )}
+              {step === 0 && <PersonalStep value={personal} onChange={setPersonal} errors={errors} />}
+              {step === 1 && <BackgroundStep value={background} onChange={setBackground} errors={errors} />}
+              {step === 2 && <ReviewStep personal={personal} background={background} />}
             </motion.div>
           </AnimatePresence>
 
@@ -234,7 +237,7 @@ function PersonalStep({ value, onChange, errors }: any) {
   return (
     <div>
       <h2 className="font-display text-xl font-semibold text-fg-primary">Personal information</h2>
-      <p className="mt-1 text-sm text-fg-secondary">Tell us a bit about you. We use these details to set up your applicant portal.</p>
+      <p className="mt-1 text-sm text-fg-secondary">Just the basics so our admissions team can reach you.</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div>
           <Label required>First name</Label>
@@ -257,11 +260,6 @@ function PersonalStep({ value, onChange, errors }: any) {
           <FieldError>{errors.phone}</FieldError>
         </div>
         <div>
-          <Label required>Date of birth</Label>
-          <Input className="mt-1.5" type="date" value={value.dob} onChange={(e) => onChange({ ...value, dob: e.target.value })} error={!!errors.dob} />
-          <FieldError>{errors.dob}</FieldError>
-        </div>
-        <div>
           <Label required>Gender</Label>
           <Select value={value.gender} onValueChange={(v) => onChange({ ...value, gender: v })}>
             <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select…" /></SelectTrigger>
@@ -273,20 +271,21 @@ function PersonalStep({ value, onChange, errors }: any) {
           </Select>
           <FieldError>{errors.gender}</FieldError>
         </div>
-        <div className="sm:col-span-2">
+        <div>
           <Label required>Nationality</Label>
           <Input className="mt-1.5" value={value.nationality} onChange={(e) => onChange({ ...value, nationality: e.target.value })} error={!!errors.nationality} />
+          <FieldError>{errors.nationality}</FieldError>
         </div>
       </div>
     </div>
   );
 }
 
-function AcademicStep({ value, onChange, errors }: any) {
+function BackgroundStep({ value, onChange, errors }: any) {
   return (
     <div>
-      <h2 className="font-display text-xl font-semibold text-fg-primary">Academic background</h2>
-      <p className="mt-1 text-sm text-fg-secondary">Tell us about your most recent qualification. You can upload supporting documents later.</p>
+      <h2 className="font-display text-xl font-semibold text-fg-primary">Background & program</h2>
+      <p className="mt-1 text-sm text-fg-secondary">Your most recent schooling and the program you&rsquo;d like to join.</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label required>Last school / institution attended</Label>
@@ -304,23 +303,6 @@ function AcademicStep({ value, onChange, errors }: any) {
           <FieldError>{errors.yearCompleted}</FieldError>
         </div>
         <div className="sm:col-span-2">
-          <Label required>Grades summary</Label>
-          <Textarea className="mt-1.5" value={value.grades} onChange={(e) => onChange({ ...value, grades: e.target.value })} error={!!errors.grades} placeholder="e.g. Biology B, Chemistry C, English A; overall: distinction" />
-          <FieldHint>Brief summary — we will request official transcripts during document verification.</FieldHint>
-          <FieldError>{errors.grades}</FieldError>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProgramStep({ value, onChange, errors }: any) {
-  return (
-    <div>
-      <h2 className="font-display text-xl font-semibold text-fg-primary">Choose your program</h2>
-      <p className="mt-1 text-sm text-fg-secondary">Pick a program and intake. Don't worry — you can change this with our admissions team if needed.</p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
           <Label required>Program</Label>
           <Select value={value.programId} onValueChange={(v) => onChange({ ...value, programId: v })}>
             <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select a program…" /></SelectTrigger>
@@ -332,7 +314,7 @@ function ProgramStep({ value, onChange, errors }: any) {
           </Select>
           <FieldError>{errors.programId}</FieldError>
         </div>
-        <div>
+        <div className="sm:col-span-2">
           <Label required>Intake</Label>
           <Select value={value.intake} onValueChange={(v) => onChange({ ...value, intake: v })}>
             <SelectTrigger className="mt-1.5"><SelectValue placeholder="Pick intake" /></SelectTrigger>
@@ -344,80 +326,41 @@ function ProgramStep({ value, onChange, errors }: any) {
           <FieldError>{errors.intake}</FieldError>
         </div>
         <div className="sm:col-span-2">
-          <Label required>Why this program?</Label>
-          <Textarea className="mt-1.5 min-h-[140px]" value={value.motivation} onChange={(e) => onChange({ ...value, motivation: e.target.value })} error={!!errors.motivation} placeholder="Tell us about your motivation and what you hope to achieve at St Alessandro…" />
-          <FieldHint>{(value.motivation || "").length} characters · minimum 40</FieldHint>
-          <FieldError>{errors.motivation}</FieldError>
+          <Label>Why this program? <span className="font-normal text-fg-tertiary">(optional)</span></Label>
+          <Textarea className="mt-1.5 min-h-[120px]" value={value.motivation} onChange={(e) => onChange({ ...value, motivation: e.target.value })} placeholder="A sentence or two about your motivation (optional)…" />
+          <FieldHint>Optional — a short note helps our advisors, but you can leave this blank.</FieldHint>
         </div>
       </div>
     </div>
   );
 }
 
-function DocumentsStep({ docs, onToggle, error }: { docs: { name: string; uploaded: boolean; required: boolean }[]; onToggle: (i: number) => void; error?: string }) {
-  return (
-    <div>
-      <h2 className="font-display text-xl font-semibold text-fg-primary">Supporting documents</h2>
-      <p className="mt-1 text-sm text-fg-secondary">Upload scanned copies (PDF or image, max 10MB each). You can replace files later from your applicant portal.</p>
-      {error && (
-        <div className="mt-4 rounded-xl border border-[oklch(0.86_0.10_25)] bg-[oklch(0.96_0.04_25)] p-3 text-sm text-[oklch(0.42_0.16_25)]">
-          {error}
-        </div>
-      )}
-      <ul className="mt-6 space-y-3">
-        {docs.map((d, i) => (
-          <li key={d.name} className={cn("flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-xl border p-4", d.uploaded ? "border-[var(--color-clinical-300)] bg-[var(--color-clinical-50)]/40" : "border-default bg-surface-sunken/40")}>
-            <div className="flex items-center gap-3">
-              <div className={cn("grid h-9 w-9 place-items-center rounded-lg", d.uploaded ? "bg-[var(--color-clinical-100)] text-[var(--color-clinical-700)]" : "bg-surface text-fg-tertiary")}>
-                {d.uploaded ? <Check className="h-4 w-4" strokeWidth={3} /> : <FileUp className="h-4 w-4" />}
-              </div>
-              <div>
-                <div className="text-sm font-medium text-fg-primary">{d.name} {d.required && <span className="text-[oklch(0.58_0.205_25)]">*</span>}</div>
-                <div className="text-xs text-fg-tertiary">{d.uploaded ? "scan-2026-09-12.pdf · 2.4 MB" : "PDF or image · max 10MB"}</div>
-              </div>
-            </div>
-            <Button variant={d.uploaded ? "secondary" : "primary"} size="sm" onClick={() => onToggle(i)}>
-              {d.uploaded ? "Replace" : "Upload"}
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ReviewStep({ personal, academic, programPick, docs }: any) {
-  const program = programs.find((p) => p.id === programPick.programId);
+function ReviewStep({ personal, background }: any) {
+  const program = programs.find((p) => p.id === background.programId);
   return (
     <div>
       <h2 className="font-display text-xl font-semibold text-fg-primary">Review & submit</h2>
-      <p className="mt-1 text-sm text-fg-secondary">Take a moment to verify your details before submitting. You can come back and edit before our review begins.</p>
+      <p className="mt-1 text-sm text-fg-secondary">
+        Verify your details, then submit — this opens your email app to send everything to our admissions team.
+      </p>
       <div className="mt-6 space-y-5">
         <Block title="Personal information">
           <Row k="Name" v={`${personal.firstName} ${personal.lastName}`} />
           <Row k="Email" v={personal.email} />
           <Row k="Phone" v={personal.phone} />
-          <Row k="Date of birth · Gender" v={`${personal.dob} · ${personal.gender}`} />
+          <Row k="Gender" v={personal.gender} />
           <Row k="Nationality" v={personal.nationality} />
         </Block>
-        <Block title="Academics">
-          <Row k="Last school" v={academic.lastSchool} />
-          <Row k="Qualification · Year" v={`${academic.qualification} · ${academic.yearCompleted}`} />
-          <Row k="Grades" v={academic.grades} />
-        </Block>
-        <Block title="Program & intake">
+        <Block title="Background & program">
+          <Row k="Last school" v={background.lastSchool} />
+          <Row k="Qualification · Year" v={`${background.qualification} · ${background.yearCompleted}`} />
           <Row k="Program" v={program ? `${program.code} · ${program.name}` : "—"} />
-          <Row k="Intake" v={programPick.intake === "sept_2026" ? "September 2026" : programPick.intake === "jan_2027" ? "January 2027" : "—"} />
-          <Row k="Motivation" v={programPick.motivation} truncate />
-        </Block>
-        <Block title="Documents">
-          {docs.map((d: any) => (
-            <Row key={d.name} k={d.name} v={d.uploaded ? "Uploaded ✓" : "Not uploaded"} />
-          ))}
+          <Row k="Intake" v={background.intake === "sept_2026" ? "September 2026" : background.intake === "jan_2027" ? "January 2027" : "—"} />
+          {background.motivation ? <Row k="Motivation" v={background.motivation} truncate /> : null}
         </Block>
       </div>
       <p className="mt-6 rounded-xl border border-[var(--color-gold-200)] bg-[var(--color-gold-50)]/60 p-3 text-sm text-[var(--color-gold-800)]">
-        By submitting, you agree to St Alessandro's privacy policy and the handling of your personal data for admissions purposes.
+        By submitting, you agree to St Alessandro&rsquo;s privacy policy and the handling of your personal data for admissions purposes.
       </p>
     </div>
   );

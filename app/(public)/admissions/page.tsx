@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Calendar, CheckCircle2, ClipboardList, CreditCard, FileCheck2, Hourglass, Mail, UserCheck } from "lucide-react";
+import { ArrowRight, Calendar, CheckCircle2, ClipboardList, CreditCard, UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/public/PageHeader";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -14,16 +14,14 @@ import {
 import { formatCurrency } from "@/lib/utils";
 
 const steps = [
-  { Icon: ClipboardList, title: "Submit your application", body: "Complete the online form and upload your supporting documents. Takes ~15 minutes." },
+  { Icon: ClipboardList, title: "Submit your application", body: "Complete the short online form — no documents needed to apply. Most people finish in under five minutes." },
   {
     Icon: CreditCard,
     title: "Pay the application fee",
-    body: "Application fees range from 5,000 to 50,000 FCFA depending on your programme tier. See the fee schedule below for exact amounts. Payments are made through the bank.",
+    body: "Application fees range from 5,000 to 50,000 FCFA depending on your programme tier (see the fee schedule below). Payments are made through the bank.",
   },
-  { Icon: FileCheck2, title: "Document verification", body: "Our admissions office reviews academic records and supporting materials within 5 working days." },
-  { Icon: UserCheck, title: "Aptitude assessment / interview", body: "Most programs require a short panel interview, conducted in person or remotely." },
-  { Icon: Mail, title: "Admission decision", body: "Decisions are communicated by email within 7 days of the interview. Provisional offers include a personalised welcome pack." },
-  { Icon: Hourglass, title: "Confirm your seat", body: "Accept your offer and pay the initial tuition installment to lock in your seat for the September intake." },
+  { Icon: UserCheck, title: "Short interview", body: "A brief chat with our admissions team — in person on campus or by phone. We confirm your documents with you at this stage." },
+  { Icon: CheckCircle2, title: "Decision & confirm your seat", body: "We share your decision by phone or email within a few days. Accept your offer and pay the first tuition installment to lock in your seat." },
 ];
 
 const dates = [
@@ -75,8 +73,8 @@ export default function AdmissionsPage() {
 
       <Section
         eyebrow="The process"
-        title="Six clear steps from application to enrolment"
-        description="We've designed every touchpoint to reduce friction so you can focus on what matters — preparing for your studies."
+        title="Four simple steps from application to enrolment"
+        description="No softcopies or uploads required to apply — we keep it short so you can focus on what matters. We confirm your documents with you in person."
       >
         <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {steps.map((s, i) => (
@@ -230,7 +228,7 @@ export default function AdmissionsPage() {
         <div className="grid gap-6 md:grid-cols-3">
           <Card hover><CardHeader><CardTitle>Call us</CardTitle><CardDescription>Mon–Sat · 8am to 6pm</CardDescription></CardHeader><CardContent><a href="tel:+237673409309" className="font-semibold text-[var(--color-brand-700)]">+237 673 409 309</a></CardContent></Card>
           <Card hover><CardHeader><CardTitle>WhatsApp</CardTitle><CardDescription>Instant replies during office hours</CardDescription></CardHeader><CardContent><a href="https://wa.me/237673409309" className="font-semibold text-[var(--color-brand-700)]">Open chat</a></CardContent></Card>
-          <Card hover><CardHeader><CardTitle>Email</CardTitle><CardDescription>Responses within 1 working day</CardDescription></CardHeader><CardContent><a href="mailto:admissions@stalessandro.edu" className="font-semibold text-[var(--color-brand-700)] break-all">admissions@stalessandro.edu</a></CardContent></Card>
+          <Card hover><CardHeader><CardTitle>Email</CardTitle><CardDescription>Responses within 1 working day</CardDescription></CardHeader><CardContent><a href="mailto:admission@edusau.com" className="font-semibold text-[var(--color-brand-700)] break-all">admission@edusau.com</a></CardContent></Card>
         </div>
       </Section>
     </>

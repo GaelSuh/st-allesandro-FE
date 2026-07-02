@@ -15,8 +15,8 @@ export const BRAND = {
   contact: {
     phone: "+237 673 409 309",
     phones: ["+237 673 409 309", "+237 679 671 505", "+237 696 894 215", "+237 676 230 402"],
-    email: "stalessandroinstitute@gmail.com",
-    emails: ["stalessandroinstitute@gmail.com", "salesclinic@edusau.com"],
+    email: "admission@edusau.com",
+    emails: ["admission@edusau.com"],
     whatsapp: "+237 673 409 309",
     hours: "Mon–Fri 8am – 5pm · Sat 8am – 1pm",
   },

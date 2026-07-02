@@ -137,9 +137,6 @@ export function PublicNav() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/login">Sign in</Link>
-          </Button>
           <Button asChild variant="gold" size="sm">
             <Link href="/apply">Apply now</Link>
           </Button>
@@ -192,11 +189,8 @@ export function PublicNav() {
                       </Link>,
                     ]
               )}
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <Button asChild variant="secondary" size="md">
-                  <Link href="/login">Sign in</Link>
-                </Button>
-                <Button asChild variant="gold" size="md">
+              <div className="mt-4">
+                <Button asChild variant="gold" size="md" className="w-full">
                   <Link href="/apply">Apply now</Link>
                 </Button>
               </div>

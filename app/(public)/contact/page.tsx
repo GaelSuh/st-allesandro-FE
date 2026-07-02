@@ -30,10 +30,18 @@ export default function ContactPage() {
       return;
     }
     setSending(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    const subject = `[Website enquiry] ${form.topic} — ${form.name}`;
+    const body = [
+      `Name: ${form.name}`,
+      `Email: ${form.email}`,
+      `Phone: ${form.phone || "—"}`,
+      `Topic: ${form.topic}`,
+      "",
+      form.message,
+    ].join("\n");
+    window.location.href = `mailto:${BRAND.contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     setSending(false);
-    setForm({ name: "", email: "", phone: "", topic: "", message: "" });
-    toast.success("Message sent — we'll be in touch within a working day.");
+    toast.success(`Opening your email app to send to ${BRAND.contact.email}…`);
   };
 
   return (
